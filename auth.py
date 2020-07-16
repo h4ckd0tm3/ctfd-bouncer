@@ -31,8 +31,13 @@ def register():
         name = request.form.get("name", "").strip()
         email_address = request.form.get("email", "").strip().lower()
         password = request.form.get("password", "").strip()
-        invite_code = request.form.get("invite_code", "").strip()
-        invite = BouncerInvites.query.filter_by(invite_code=invite_code).first()
+
+        if DBUtils.get_config().get("bouncer_enabled") == "true":
+            invite_code = request.form.get("invite_code", "").strip()
+            invite = BouncerInvites.query.filter_by(invite_code=invite_code).first()
+
+            if not check_invite_code(invite):
+                errors.append("Invite Code invalid or no uses left.")
 
         name_len = len(name) == 0
         names = Users.query.add_columns("name", "id").filter_by(name=name).first()
@@ -66,9 +71,6 @@ def register():
             errors.append("Pick a shorter password")
         if name_len:
             errors.append("Pick a longer user name")
-
-        if not check_invite_code(invite):
-            errors.append("Invite Code invalid or no uses left.")
 
         if len(errors) > 0:
             return render_template(
