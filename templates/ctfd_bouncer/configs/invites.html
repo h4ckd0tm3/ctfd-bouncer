@@ -1,0 +1,53 @@
+<div role="tabpanel" class="tab-pane config-section" id="invites">
+	<div class="row">
+		<div class="col-md-12">
+			<div class="float-right pb-3">
+				<div class="btn-group" role="group">
+                    <form action="/admin/bouncer/invite/new">
+                        <button type="submit" class="btn btn-outline-primary" data-toggle="tooltip" title="Add Invite" id="invites-add-button">
+                            <i class="btn-fa fas fa-plus"></i>
+                        </button>
+                    </form>
+					<button type="button" class="btn btn-outline-danger" data-toggle="tooltip" title="Delete Invite" id="invites-delete-button">
+						<i class="btn-fa fas fa-trash-alt"></i>
+					</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="row">
+		<div class="col-md-12">
+			<div>
+				<table id="challenges" class="table table-striped border">
+					<thead>
+					<tr>
+						<td class="d-block border-right border-bottom text-center" data-checkbox>
+							<div class="form-check">
+								<input type="checkbox" class="form-check-input" data-checkbox-all>&nbsp;
+							</div>
+						</td>
+						<th class="sort-col text-center"><b>ID</b></th>
+						<th class="sort-col"><b>Invite Code</b></th>
+						<th class="d-none d-md-table-cell d-lg-table-cell sort-col"><b>Uses</b></th>
+					</tr>
+					</thead>
+					<tbody>
+					{% for invite, invite_use in invites %}
+						<tr>
+							<td class="d-block border-right text-center" data-checkbox>
+								<div class="form-check">
+									<input type="checkbox" class="form-check-input" value="{{ invite.id }}" data-invite-id="{{ invite.id }}">&nbsp;
+								</div>
+							</td>
+							<td class="text-center">{{ invite.id }}</td>
+							<td class="d-none d-md-table-cell d-lg-table-cell">{{ invite.invite_code }}</td>
+							<td class="d-none d-md-table-cell d-lg-table-cell">{{ invite_use }}/{{ invite.uses }}</td>
+						</tr>
+					{% endfor %}
+					</tbody>
+				</table>
+			</div>
+		</div>
+	</div>
+</div>
