@@ -84,11 +84,15 @@ def register():
         else:
             with app.app_context():
                 user = Users(name=name, email=email_address, password=password)
-                invite_use = BouncerUses(invite.id, user.id)
                 db.session.add(user)
-                db.session.add(invite_use)
                 db.session.commit()
                 db.session.flush()
+
+                if DBUtils.get_config().get("bouncer_enabled") == "true":
+                    invite_user = Users.query.filter_by(email=user.email).first()
+                    invite_use = BouncerUses(invite.id, invite_user.id)
+                    db.session.add(invite_use)
+                    db.session.commit()
 
                 login_user(user)
 
