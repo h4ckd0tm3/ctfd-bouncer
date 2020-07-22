@@ -31,7 +31,7 @@ class BouncerInvites(db.Model):
 class BouncerUses(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     invite_id = db.Column(None, db.ForeignKey("bouncer_invites.id"))
-    user_id = db.Column(None, db.ForeignKey("users.id"))
+    user_id = db.Column(None, db.ForeignKey("users.id", ondelete="SET NULL"))
 
     # Relationships
     user = db.relationship("Users", foreign_keys="BouncerUses.user_id", lazy="select")
