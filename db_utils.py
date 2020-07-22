@@ -63,6 +63,13 @@ class DBUtils:
 
     @staticmethod
     def delete_invite(id):
+        invite_uses = db.session.query(BouncerUses).filter_by(invite_id=id)
+
+        for invite_use in invite_uses:
+            db.session.delete(invite_use)
+
+        db.session.commit()
+
         invite = db.session.query(BouncerInvites).filter_by(id=id).first()
         db.session.delete(invite)
         db.session.commit()
