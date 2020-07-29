@@ -1,14 +1,14 @@
 from flask import current_app as app
-from flask import redirect, render_template, request, session, url_for
+from flask import redirect, render_template, request, url_for
 
-from CTFd.models import Teams, Users, db
-from CTFd.utils import config, email, get_app_config, get_config
+from CTFd.models import Users, db
+from CTFd.utils import config, email, get_config
 from CTFd.utils import validators
 from CTFd.utils.config import is_teams_mode
-from CTFd.utils.helpers import error_for, get_errors
+from CTFd.utils.helpers import get_errors
 from CTFd.utils.logging import log
-from CTFd.utils.security.auth import login_user, logout_user
-
+from CTFd.utils.security.auth import login_user
+from CTFd.utils.validators import ValidationError
 from .db_utils import DBUtils
 from .models import BouncerInvites, BouncerUses
 
@@ -24,7 +24,6 @@ def check_invite_code(invite):
 
     return False
 
-
 def register():
     errors = get_errors()
     if request.method == "POST":
@@ -39,17 +38,40 @@ def register():
             if not check_invite_code(invite):
                 errors.append("Invite Code invalid or no uses left.")
 
+        website = request.form.get("website")
+        affiliation = request.form.get("affiliation")
+        country = request.form.get("country")
+
         name_len = len(name) == 0
         names = Users.query.add_columns("name", "id").filter_by(name=name).first()
         emails = (
             Users.query.add_columns("email", "id")
-                .filter_by(email=email_address)
-                .first()
+            .filter_by(email=email_address)
+            .first()
         )
         pass_short = len(password) == 0
         pass_long = len(password) > 128
         valid_email = validators.validate_email(email_address)
         team_name_email_check = validators.validate_email(name)
+
+        if country:
+            try:
+                validators.validate_country_code(country)
+                valid_country = True
+            except ValidationError:
+                valid_country = False
+        else:
+            valid_country = True
+
+        if website:
+            valid_website = validators.validate_url(website)
+        else:
+            valid_website = True
+
+        if affiliation:
+            valid_affiliation = len(affiliation) < 128
+        else:
+            valid_affiliation = True
 
         if not valid_email:
             errors.append("Please enter a valid email address")
@@ -71,6 +93,12 @@ def register():
             errors.append("Pick a shorter password")
         if name_len:
             errors.append("Pick a longer user name")
+        if valid_website is False:
+            errors.append("Websites must be a proper URL starting with http or https")
+        if valid_country is False:
+            errors.append("Invalid country")
+        if valid_affiliation is False:
+            errors.append("Please provide a shorter affiliation")
 
         if len(errors) > 0:
             return render_template(
@@ -84,6 +112,14 @@ def register():
         else:
             with app.app_context():
                 user = Users(name=name, email=email_address, password=password)
+
+                if website:
+                    user.website = website
+                if affiliation:
+                    user.affiliation = affiliation
+                if country:
+                    user.country = country
+
                 db.session.add(user)
                 db.session.commit()
                 db.session.flush()
@@ -97,7 +133,7 @@ def register():
                 login_user(user)
 
                 if config.can_send_mail() and get_config(
-                        "verify_emails"
+                    "verify_emails"
                 ):  # Confirming users is enabled and we can send email.
                     log(
                         "registrations",
@@ -108,7 +144,7 @@ def register():
                     return redirect(url_for("auth.confirm"))
                 else:  # Don't care about confirming users
                     if (
-                            config.can_send_mail()
+                        config.can_send_mail()
                     ):  # We want to notify the user that they have registered.
                         email.successful_registration_notification(user.email)
 
