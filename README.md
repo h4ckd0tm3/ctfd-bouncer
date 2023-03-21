@@ -1,5 +1,4 @@
 # ctfd-bouncer
-[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://paypal.me/Schni)
 
 Invite Plugin for CTFd
 
